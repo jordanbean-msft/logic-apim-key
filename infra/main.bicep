@@ -57,6 +57,8 @@ module apimDeployment 'apim.bicep' = {
     location: location
     publisherEmail: publisherEmail
     publisherName: publisherName
+    appInsightsName: loggingDeployment.outputs.appInsightsName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
   }
 }
 
