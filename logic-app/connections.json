@@ -1,0 +1,32 @@
+{
+  "managedApiConnections": {
+    "office365": {
+      "api": {
+        "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/office365"
+      },
+      "connection": {
+        "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/resourceGroups/rg-logic-apim-key-ussc-demo/providers/Microsoft.Web/connections/office365-1"
+      },
+      "connectionRuntimeUrl": "https://1d72121ecd6a2ff0.10.common.logic-southcentralus.azure-apihub.net/apim/office365/329d5de1b11c4f7ba492eea6c0385f87/",
+      "authentication": {
+        "type": "Raw",
+        "scheme": "Key",
+        "parameter": "@appsetting('office365-connectionKey')"
+      }
+    },
+    "office365_1": {
+      "api": {
+        "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/providers/Microsoft.Web/locations/southcentralus/managedApis/office365"
+      },
+      "connection": {
+        "id": "/subscriptions/dcf66641-6312-4ee1-b296-723bb0a999ba/resourceGroups/rg-logic-apim-key-ussc-demo/providers/Microsoft.Web/connections/office365"
+      },
+      "connectionRuntimeUrl": "https://1d72121ecd6a2ff0.10.common.logic-southcentralus.azure-apihub.net/apim/office365/63fc487f9aaa4875a6586e54e04a8b1b/",
+      "authentication": {
+        "type": "Raw",
+        "scheme": "Key",
+        "parameter": "@appsetting('office365_1-connectionKey')"
+      }
+    }
+  }
+}

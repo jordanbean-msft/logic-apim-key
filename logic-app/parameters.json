@@ -1,0 +1,22 @@
+{
+  "MANAGEMENT_REST_API_VERSION": {
+    "type": "String",
+    "value": "@appsetting('MANAGEMENT_REST_API_VERSION')"
+  },
+  "SUBSCRIPTION_ID": {
+    "type": "String",
+    "value": "@appsetting('SUBSCRIPTION_ID')"
+  },
+  "API_MANAGEMENT_SERVICE_NAME": {
+    "type": "String",
+    "value": "@appsetting('API_MANAGEMENT_SERVICE_NAME')"
+  },
+  "RESOURCE_GROUP_NAME": {
+    "type": "String",
+    "value": "@appsetting('RESOURCE_GROUP_NAME')"
+  },
+  "USER_ASSIGNED_IDENTITY_NAME": {
+    "type": "String",
+    "value": "@appsetting('USER_ASSIGNED_IDENTITY_NAME')"
+  }
+}

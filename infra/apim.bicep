@@ -4,6 +4,7 @@ param publisherEmail string
 param publisherName string
 param logAnalyticsWorkspaceName string
 param appInsightsName string
+param userAssignedManagedIdentityName string
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' existing = {
   name: appInsightsName
@@ -67,6 +68,22 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2021-08-01' = {
         response: {}
       }
     }
+  }
+}
+
+resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
+  name: userAssignedManagedIdentityName
+}
+
+var apiManagementServiceContributorRoleDefinitionId = '312a565d-c81f-4fd8-895a-4e21e48d571c'
+
+resource apimRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+  name: guid(apiManagementServiceContributorRoleDefinitionId, userAssignedManagedIdentity.id, apiManagementService.id)
+  scope: apiManagementService
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', apiManagementServiceContributorRoleDefinitionId)
+    principalId: userAssignedManagedIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 

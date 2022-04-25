@@ -59,6 +59,7 @@ module apimDeployment 'apim.bicep' = {
     publisherName: publisherName
     appInsightsName: loggingDeployment.outputs.appInsightsName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
   }
 }
 
@@ -79,6 +80,9 @@ module logicAppDeployment 'logic-app.bicep' = {
     appServicePlanName: appServicePlanDeployment.outputs.logicAppAppServicePlanName
     location: location
     storageAccountName: storageAccountDeployment.outputs.storageAccountName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    apiManagementServiceName: names.outputs.apiManagementServiceName
+    userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
   }
 }
 
