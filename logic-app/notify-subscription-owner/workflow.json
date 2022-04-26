@@ -1,10 +1,354 @@
 {
   "definition": {
     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-    "actions": {},
+    "actions": {
+      "For_each": {
+        "actions": {
+          "Condition": {
+            "actions": {
+              "Send_an_email_-_Approved": {
+                "inputs": {
+                  "body": {
+                    "Body": "<p>API Subscription ownership has been approved - @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}</p>",
+                    "Subject": "API Subscription ownership has been approved - @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}",
+                    "To": "@{body('Parse_JSON_-_Get_subscription_owner')?['properties']?['email']}"
+                  },
+                  "host": {
+                    "connection": {
+                      "referenceName": "office365"
+                    }
+                  },
+                  "method": "post",
+                  "path": "/v2/Mail"
+                },
+                "runAfter": {},
+                "type": "ApiConnection"
+              }
+            },
+            "else": {
+              "actions": {
+                "Send_an_email_-_Denied": {
+                  "inputs": {
+                    "body": {
+                      "Body": "<p>API Subscription ownership has been denied- @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}</p>",
+                      "Subject": "API Subscription ownership has been denied- @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}",
+                      "To": "@{body('Parse_JSON_-_Get_subscription_owner')?['properties']?['email']}"
+                    },
+                    "host": {
+                      "connection": {
+                        "referenceName": "office365"
+                      }
+                    },
+                    "method": "post",
+                    "path": "/v2/Mail"
+                  },
+                  "runAfter": {},
+                  "type": "ApiConnection"
+                }
+              }
+            },
+            "expression": {
+              "and": [
+                {
+                  "equals": [
+                    "@body('Send_approval_email')?['SelectedOption']",
+                    "Approve"
+                  ]
+                }
+              ]
+            },
+            "runAfter": {
+              "Send_approval_email": ["Succeeded"]
+            },
+            "type": "If"
+          },
+          "HTTP_-_Get_product": {
+            "inputs": {
+              "authentication": {
+                "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                "type": "ManagedServiceIdentity"
+              },
+              "method": "GET",
+              "queries": {
+                "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+              },
+              "uri": "https://management.azure.com/@{items('For_each')?['properties']?['scope']}"
+            },
+            "runAfter": {
+              "Parse_JSON_-_Get_subscription_owner": ["Succeeded"]
+            },
+            "type": "Http"
+          },
+          "HTTP_-_Get_subscription_owner": {
+            "inputs": {
+              "authentication": {
+                "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                "type": "ManagedServiceIdentity"
+              },
+              "method": "GET",
+              "queries": {
+                "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+              },
+              "uri": "https://management.azure.com@{items('For_each')?['properties']?['ownerId']}"
+            },
+            "runAfter": {},
+            "type": "Http"
+          },
+          "Parse_JSON_-_Get_product": {
+            "inputs": {
+              "content": "@body('HTTP_-_Get_product')",
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": ["string", "null"]
+                  },
+                  "name": {
+                    "type": ["string", "null"]
+                  },
+                  "properties": {
+                    "properties": {
+                      "approvalRequired": {
+                        "type": "boolean"
+                      },
+                      "description": {
+                        "type": ["string", "null"]
+                      },
+                      "displayName": {
+                        "type": ["string", "null"]
+                      },
+                      "state": {
+                        "type": ["string", "null"]
+                      },
+                      "subscriptionRequired": {
+                        "type": "boolean"
+                      },
+                      "subscriptionsLimit": {
+                        "type": "integer"
+                      },
+                      "terms": {
+                        "type": ["string", "null"]
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "runAfter": {
+              "HTTP_-_Get_product": ["Succeeded"]
+            },
+            "type": "ParseJson"
+          },
+          "Parse_JSON_-_Get_subscription_owner": {
+            "inputs": {
+              "content": "@body('HTTP_-_Get_subscription_owner')",
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": ["string", "null"]
+                  },
+                  "name": {
+                    "type": ["string", "null"]
+                  },
+                  "properties": {
+                    "properties": {
+                      "email": {
+                        "type": ["string", "null"]
+                      },
+                      "firstName": {
+                        "type": ["string", "null"]
+                      },
+                      "identities": {
+                        "items": {
+                          "properties": {
+                            "id": {
+                              "type": ["string", "null"]
+                            },
+                            "provider": {
+                              "type": ["string", "null"]
+                            }
+                          },
+                          "required": ["provider", "id"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "lastName": {
+                        "type": ["string", "null"]
+                      },
+                      "note": {},
+                      "registrationDate": {
+                        "type": ["string", "null"]
+                      },
+                      "state": {
+                        "type": ["string", "null"]
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "runAfter": {
+              "HTTP_-_Get_subscription_owner": ["Succeeded"]
+            },
+            "type": "ParseJson"
+          },
+          "Send_approval_email": {
+            "inputs": {
+              "body": {
+                "Message": {
+                  "Body": "Please approve this email if you are still the owner of this API subscription. Deny if you are no longer the approver.",
+                  "HideHTMLMessage": false,
+                  "Importance": "High",
+                  "Options": "Approve, Reject",
+                  "ShowHTMLConfirmationDialog": false,
+                  "Subject": "API Subscription ownership approval required - @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}",
+                  "To": "@{body('Parse_JSON_-_Get_subscription_owner')?['properties']?['email']}"
+                },
+                "NotificationUrl": "@{listCallbackUrl()}"
+              },
+              "host": {
+                "connection": {
+                  "referenceName": "office365"
+                }
+              },
+              "path": "/approvalmail/$subscriptions"
+            },
+            "runAfter": {
+              "Parse_JSON_-_Get_product": ["Succeeded"]
+            },
+            "type": "ApiConnectionWebhook"
+          }
+        },
+        "foreach": "@body('Parse_JSON_-_Get_all_subscriptions')?['value']",
+        "runAfter": {
+          "Parse_JSON_-_Get_all_subscriptions": ["Succeeded"]
+        },
+        "type": "Foreach"
+      },
+      "HTTP_-_Get_all_subscriptions": {
+        "inputs": {
+          "authentication": {
+            "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+            "type": "ManagedServiceIdentity"
+          },
+          "method": "GET",
+          "queries": {
+            "$filter": "ownerId ne null",
+            "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+          },
+          "uri": "@{variables('APIM_MANAGEMENT_REST_API_ROOT')}/subscriptions"
+        },
+        "runAfter": {
+          "Initialize_variable_-_APIM_MANAGEMENT_REST_API_ROOT": ["Succeeded"]
+        },
+        "type": "Http"
+      },
+      "Initialize_variable_-_APIM_MANAGEMENT_REST_API_ROOT": {
+        "inputs": {
+          "variables": [
+            {
+              "name": "APIM_MANAGEMENT_REST_API_ROOT",
+              "type": "string",
+              "value": "https://management.azure.com/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ApiManagement/service/@{parameters('API_MANAGEMENT_SERVICE_NAME')}"
+            }
+          ]
+        },
+        "runAfter": {},
+        "type": "InitializeVariable"
+      },
+      "Parse_JSON_-_Get_all_subscriptions": {
+        "inputs": {
+          "content": "@body('HTTP_-_Get_all_subscriptions')",
+          "schema": {
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "value": {
+                "items": {
+                  "properties": {
+                    "id": {
+                      "type": ["string", "null"]
+                    },
+                    "name": {
+                      "type": ["string", "null"]
+                    },
+                    "properties": {
+                      "properties": {
+                        "allowTracing": {
+                          "type": "boolean"
+                        },
+                        "createdDate": {
+                          "type": ["string", "null"]
+                        },
+                        "displayName": {
+                          "type": ["string", "null"]
+                        },
+                        "endDate": {
+                          "type": ["string", "null"]
+                        },
+                        "expirationDate": {
+                          "type": ["string", "null"]
+                        },
+                        "notificationDate": {
+                          "type": ["string", "null"]
+                        },
+                        "ownerId": {
+                          "type": ["string", "null"]
+                        },
+                        "scope": {
+                          "type": ["string", "null"]
+                        },
+                        "startDate": {
+                          "type": ["string", "null"]
+                        },
+                        "state": {
+                          "type": ["string", "null"]
+                        },
+                        "stateComment": {
+                          "type": ["string", "null"]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": {
+                      "type": ["string", "null"]
+                    }
+                  },
+                  "required": ["id", "type", "name", "properties"],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "runAfter": {
+          "HTTP_-_Get_all_subscriptions": ["Succeeded"]
+        },
+        "type": "ParseJson"
+      }
+    },
     "contentVersion": "1.0.0.0",
     "outputs": {},
-    "triggers": {}
+    "triggers": {
+      "manual": {
+        "inputs": {},
+        "kind": "Http",
+        "type": "Request"
+      }
+    }
   },
   "kind": "Stateful"
 }
