@@ -65,6 +65,7 @@ resource function 'Microsoft.Web/sites@2021-01-15' = {
           value: keyVaultName
         }
       ]
+      netFrameworkVersion: 'v5.0'
     }
   }
 }
