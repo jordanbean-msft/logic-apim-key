@@ -1,4 +1,12 @@
 {
+  "KEY_VAULT_NAME": {
+    "type": "String",
+    "value": "@appsetting('KEY_VAULT_NAME')"
+  },
+  "GENERATE_SUBSCRIPTION_KEY_ENDPOINT": {
+    "type": "String",
+    "value": "@appsetting('GENERATE_SUBSCRIPTION_KEY_ENDPOINT')"
+  },
   "MANAGEMENT_REST_API_VERSION": {
     "type": "String",
     "value": "@appsetting('MANAGEMENT_REST_API_VERSION')"

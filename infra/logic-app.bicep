@@ -6,6 +6,8 @@ param storageAccountName string
 param logAnalyticsWorkspaceName string
 param apiManagementServiceName string
 param userAssignedManagedIdentityName string
+param keyVaultName string
+param functionName string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' existing = {
   name: appServicePlanName
@@ -100,6 +102,14 @@ resource logicApp 'Microsoft.Web/sites@2021-03-01' = {
         {
           name: 'USER_ASSIGNED_IDENTITY_NAME'
           value: userAssignedManagedIdentityName
+        }
+        {
+          name: 'KEY_VAULT_NAME'
+          value: keyVaultName
+        }
+        {
+          name: 'GENERATE_SUBSCRIPTION_KEY_ENDPOINT'
+          value: 'https://${functionName}.azurewebsites.net/api/GenerateNewSubscriptionKey'
         }
       ]
     }

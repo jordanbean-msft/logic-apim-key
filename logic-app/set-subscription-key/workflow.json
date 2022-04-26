@@ -172,17 +172,26 @@
                                     "HTTP_-_Regenerate_primary_key": {
                                         "type": "Http",
                                         "inputs": {
-                                            "method": "POST",
-                                            "uri": "@{variables('APIM_MANAGEMENT_REST_API_ROOT')}/subscriptions/@{items('For_each')?['name']}/regeneratePrimaryKey",
+                                            "method": "PATCH",
+                                            "uri": "@{variables('APIM_MANAGEMENT_REST_API_ROOT')}/subscriptions/@{items('For_each')?['name']}",
                                             "queries": {
                                                 "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+                                            },
+                                            "body": {
+                                                "properties": {
+                                                    "primaryKey": "@{body('Parse_JSON_-_Generate_new_subscription_key')?['value']}"
+                                                }
                                             },
                                             "authentication": {
                                                 "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
                                                 "type": "ManagedServiceIdentity"
                                             }
                                         },
-                                        "runAfter": {}
+                                        "runAfter": {
+                                            "HTTP_-_Store_new_subscription_key_in_KeyVault": [
+                                                "Succeeded"
+                                            ]
+                                        }
                                     },
                                     "HTTP_-_Get_subscription_owner": {
                                         "type": "Http",
@@ -384,6 +393,61 @@
                                         },
                                         "runAfter": {
                                             "HTTP_-_Get_product": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    },
+                                    "HTTP_-_Generate_new_subscription_key": {
+                                        "type": "Http",
+                                        "inputs": {
+                                            "method": "POST",
+                                            "uri": "@parameters('GENERATE_SUBSCRIPTION_KEY_ENDPOINT')",
+                                            "authentication": {
+                                                "type": "ManagedServiceIdentity",
+                                                "audience": "https://management.azure.com",
+                                                "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}"
+                                            }
+                                        },
+                                        "runAfter": {}
+                                    },
+                                    "Parse_JSON_-_Generate_new_subscription_key": {
+                                        "type": "ParseJson",
+                                        "inputs": {
+                                            "content": "@body('HTTP_-_Generate_new_subscription_key')",
+                                            "schema": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "HTTP_-_Generate_new_subscription_key": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    },
+                                    "HTTP_-_Store_new_subscription_key_in_KeyVault": {
+                                        "type": "Http",
+                                        "inputs": {
+                                            "method": "PUT",
+                                            "uri": "https://@{parameters('KEY_VAULT_NAME')}.vault.azure.net/secrets/@{items('For_each')?['name']}",
+                                            "queries": {
+                                                "api-version": "7.3"
+                                            },
+                                            "body": {
+                                                "value": "@{body('Parse_JSON_-_Generate_new_subscription_key')?['value']}"
+                                            },
+                                            "authentication": {
+                                                "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                                                "type": "ManagedServiceIdentity",
+                                                "audience": "https://vault.azure.net"
+                                            }
+                                        },
+                                        "runAfter": {
+                                            "Parse_JSON_-_Generate_new_subscription_key": [
                                                 "Succeeded"
                                             ]
                                         }

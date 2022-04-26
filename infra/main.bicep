@@ -83,6 +83,8 @@ module logicAppDeployment 'logic-app.bicep' = {
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     apiManagementServiceName: names.outputs.apiManagementServiceName
     userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+    functionName: names.outputs.functionName
+    keyVaultName: names.outputs.keyVaultName
   }
 }
 

@@ -70,6 +70,31 @@ resource function 'Microsoft.Web/sites@2021-01-15' = {
   }
 }
 
+resource authSettings 'Microsoft.Web/sites/config@2021-03-01' = {
+  name: '${function.name}/authsettingsV2'
+  properties: {
+    globalValidation: {
+      requireAuthentication: true
+      unauthenticatedClientAction: 'Return401'
+    }
+    identityProviders: {
+      azureActiveDirectory: {
+        enabled: true
+        registration: {
+          clientId: userAssignedManagedIdentity.properties.principalId
+          clientSecret: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET'
+          openIdIssuer: 'https://sts.windows.net/${userAssignedManagedIdentity.properties.tenantId}/'
+        }
+        validation: {
+          allowedAudiences: [
+            '${environment().resourceManager}'
+          ]
+        }
+      }
+    }
+  }
+}
+
 resource backendForFrontendCors 'Microsoft.Web/sites/config@2021-02-01' = {
   name: '${function.name}/web'
   properties: {
