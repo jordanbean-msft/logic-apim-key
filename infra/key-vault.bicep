@@ -20,13 +20,13 @@ resource userAssignedManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIden
   name: userAssignedManagedIdentityName
 }
 
-var keyVaultSecretsUserRoleDefinitionId = '4633458b-17de-408a-b874-0445c86b69e6'
+var keyVaultSecretsOfficerRoleDefinitionId = 'b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
 
 resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(keyVaultSecretsUserRoleDefinitionId, userAssignedManagedIdentity.id, keyVault.id)
+  name: guid(keyVaultSecretsOfficerRoleDefinitionId, userAssignedManagedIdentity.id, keyVault.id)
   scope: keyVault
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsUserRoleDefinitionId)
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', keyVaultSecretsOfficerRoleDefinitionId)
     principalId: userAssignedManagedIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }

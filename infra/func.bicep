@@ -75,19 +75,20 @@ resource authSettings 'Microsoft.Web/sites/config@2021-03-01' = {
   properties: {
     globalValidation: {
       requireAuthentication: true
-      unauthenticatedClientAction: 'Return401'
+      unauthenticatedClientAction: 'AllowAnonymous'
+      tokenStoreEnabled: true
     }
     identityProviders: {
       azureActiveDirectory: {
         enabled: true
         registration: {
           clientId: userAssignedManagedIdentity.properties.principalId
-          clientSecret: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET'
-          openIdIssuer: 'https://sts.windows.net/${userAssignedManagedIdentity.properties.tenantId}/'
+          clientSecretSettingName: 'MICROSOFT_PROVIDER_AUTHENTICATION_SECRET'
+          openIdIssuer: 'https://sts.windows.net/${userAssignedManagedIdentity.properties.tenantId}'
         }
         validation: {
           allowedAudiences: [
-            '${environment().resourceManager}'
+            'https://management.azure.com'
           ]
         }
       }
