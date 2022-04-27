@@ -5,15 +5,8 @@
 }
 
 <div class="text-center">
-  <h1 class="display-4">Welcome</h1>
-  <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
-<div>
-  @if (ViewData["vehicle"] != null)
+  @using (Html.BeginForm("Index", "Home"))
   {
-    <h2>VehicleType: @(((Vehicle)ViewData["vehicle"]).VehicleType)</h2>
-    <h2>MaxSpeed: @(((Vehicle)ViewData["vehicle"]).MaxSpeed)</h2>
-    <h2>AvgSpeed: @(((Vehicle)ViewData["vehicle"]).AvgSpeed)</h2>
-    <h2>SpeedUnit: @(((Vehicle)ViewData["vehicle"]).SpeedUnit)</h2>
+    <input type="submit" value="Call API" />
   }
 </div>

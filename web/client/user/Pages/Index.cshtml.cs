@@ -36,7 +36,12 @@ public class IndexModel : PageModel
     _httpClient = new HttpClient();
   }
 
-  public async Task OnGetAsync()
+  public IActionResult OnGetAsync()
+  {
+    return Page();
+  }
+
+  public async Task<IActionResult> OnPostAsync()
   {
     string[] scopes = new string[] { _configuration.GetSection("EchoApiScope").Value };
     string accessToken = await _tokenAcquisition.GetAccessTokenForUserAsync(scopes);
@@ -58,6 +63,8 @@ public class IndexModel : PageModel
     var response = await _httpClient.PutAsync(_configuration.GetSection("EchoAPIEndpoint").Value, content);
     response.EnsureSuccessStatusCode();
 
-    ViewData["vehicle"] = await response.Content.ReadFromJsonAsync<Vehicle>();
+    var resultVehicle = await response.Content.ReadFromJsonAsync<Vehicle>();
+
+    return RedirectToPage("Response", resultVehicle);
   }
 }
