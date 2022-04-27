@@ -1,45 +1,44 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Xml.Serialization;
+using api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.Resource;
 
-namespace user.Pages;
+namespace api.Controllers;
 
-
-[AuthorizeForScopes(Scopes = new[] { "api://34930f13-7679-40f5-9313-1b6c07dc4c09/user_impersonation" })]
-public class IndexModel : PageModel
+[ApiController]
+[Route("[controller]")]
+public class VehicleController : ControllerBase
 {
-  private readonly ILogger<IndexModel> _logger;
+  private readonly ILogger<VehicleController> _logger;
   private readonly HttpClient _httpClient;
 
-  private readonly IConfiguration _configuration;
+  private IConfiguration _configuration;
 
-  private readonly ITokenAcquisition _tokenAcquisition;
-
-  public IndexModel(ILogger<IndexModel> logger, ITokenAcquisition tokenAcquisition, IConfiguration configuration)
+  public VehicleController(ILogger<VehicleController> logger, IConfiguration configuration)
   {
     _logger = logger;
-    _tokenAcquisition = tokenAcquisition;
     _configuration = configuration;
 
     _httpClient = new HttpClient();
   }
 
-  public IActionResult OnGetAsync()
-  {
-    return Page();
-  }
-
-  public async Task<IActionResult> OnPostAsync()
+  [HttpGet(Name = "GetVehicle")]
+  public async Task<Vehicle> GetAsync()
   {
     string[] scopes = new string[] { _configuration.GetSection("EchoApiScope").Value };
-    string accessToken = await _tokenAcquisition.GetAccessTokenForUserAsync(scopes);
+    var app = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+      .WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+      .WithAuthority(_configuration.GetSection("AzureAd:Instance").Value + _configuration.GetSection("AzureAd:TenantId").Value)
+      .Build();
 
-    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+    var authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync();
+
+    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
     _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _configuration.GetSection("EchoApiSubscriptionKey").Value);
     _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -58,6 +57,6 @@ public class IndexModel : PageModel
 
     var resultVehicle = await response.Content.ReadFromJsonAsync<Vehicle>();
 
-    return RedirectToPage("Response", resultVehicle);
+    return resultVehicle;
   }
 }
