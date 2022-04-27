@@ -1,0 +1,19 @@
+﻿@page
+@model IndexModel
+@{
+  ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+  <h1 class="display-4">Welcome</h1>
+  <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<div>
+  @if (ViewData["vehicle"] != null)
+  {
+    <h2>VehicleType: @(((Vehicle)ViewData["vehicle"]).VehicleType)</h2>
+    <h2>MaxSpeed: @(((Vehicle)ViewData["vehicle"]).MaxSpeed)</h2>
+    <h2>AvgSpeed: @(((Vehicle)ViewData["vehicle"]).AvgSpeed)</h2>
+    <h2>SpeedUnit: @(((Vehicle)ViewData["vehicle"]).SpeedUnit)</h2>
+  }
+</div>
