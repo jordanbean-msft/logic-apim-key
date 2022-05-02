@@ -4,6 +4,8 @@ param environment string
 param location string = resourceGroup().location
 param publisherName string
 param publisherEmail string
+param tenantId string = subscription().tenantId
+param apiAppIdUri string
 
 module names 'resource-names.bicep' = {
   name: 'resource-names'
@@ -60,6 +62,11 @@ module apimDeployment 'apim.bicep' = {
     appInsightsName: loggingDeployment.outputs.appInsightsName
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+    eventHubName: eventHubDeployment.outputs.eventHubName
+    eventHubNamespaceName: eventHubDeployment.outputs.eventHubNamespace
+    eventHubSendAuthorizationRuleName: eventHubDeployment.outputs.eventHubSendAuthorizationRuleName
+    tenantId: tenantId
+    apiAppIdUri: apiAppIdUri
   }
 }
 
@@ -99,5 +106,17 @@ module functionDeployment 'func.bicep' = {
     logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
     storageAccountName: storageAccountDeployment.outputs.storageAccountName
     userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+  }
+}
+
+module eventHubDeployment 'event-hub.bicep' = {
+  name: 'event-hub-deployment'
+  params: {
+    eventHubName: names.outputs.eventHubName
+    eventHubNamespaceName: names.outputs.eventHubNamespaceName
+    location: location
+    userAssignedManagedIdentityName: managedIdentityDeployment.outputs.managedIdentityName
+    logAnalyticsWorkspaceName: loggingDeployment.outputs.logAnalyticsWorkspaceName
+    eventHubSendAuthorizationRuleName: names.outputs.eventHubSendAuthorizationRuleName
   }
 }

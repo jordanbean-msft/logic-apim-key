@@ -1,0 +1,29 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "Scope": {
+                "type": "Scope",
+                "actions": {},
+                "runAfter": {}
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "type": "Recurrence",
+                "recurrence": {
+                    "frequency": "Month",
+                    "interval": 1,
+                    "schedule": {
+                        "monthDays": [
+                            -1
+                        ]
+                    }
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateless"
+}
