@@ -1,0 +1,399 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "HTTP_-_Get_all_subscriptions": {
+        "type": "Http",
+        "inputs": {
+          "method": "GET",
+          "uri": "@{variables('APIM_MANAGEMENT_REST_API_ROOT')}/subscriptions",
+          "queries": {
+            "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')",
+            "$filter": "ownerId ne null"
+          },
+          "authentication": {
+            "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+            "type": "ManagedServiceIdentity"
+          }
+        },
+        "runAfter": {
+          "Initialize_variable_-_APIM_MANAGEMENT_REST_API_ROOT": ["Succeeded"]
+        }
+      },
+      "Parse_JSON_-_Get_all_subscriptions": {
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@body('HTTP_-_Get_all_subscriptions')",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": ["string", "null"]
+                    },
+                    "type": {
+                      "type": ["string", "null"]
+                    },
+                    "name": {
+                      "type": ["string", "null"]
+                    },
+                    "properties": {
+                      "type": "object",
+                      "properties": {
+                        "ownerId": {
+                          "type": ["string", "null"]
+                        },
+                        "scope": {
+                          "type": ["string", "null"]
+                        },
+                        "displayName": {
+                          "type": ["string", "null"]
+                        },
+                        "state": {
+                          "type": ["string", "null"]
+                        },
+                        "createdDate": {
+                          "type": ["string", "null"]
+                        },
+                        "startDate": {
+                          "type": ["string", "null"]
+                        },
+                        "expirationDate": {
+                          "type": ["string", "null"]
+                        },
+                        "endDate": {
+                          "type": ["string", "null"]
+                        },
+                        "notificationDate": {
+                          "type": ["string", "null"]
+                        },
+                        "stateComment": {
+                          "type": ["string", "null"]
+                        },
+                        "allowTracing": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["id", "type", "name", "properties"]
+                }
+              },
+              "count": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "runAfter": {
+          "HTTP_-_Get_all_subscriptions": ["Succeeded"]
+        }
+      },
+      "For_each": {
+        "type": "Foreach",
+        "foreach": "@body('Parse_JSON_-_Get_all_subscriptions')?['value']",
+        "actions": {
+          "Condition_-_Expiration_date_is_less_than_30_days_out": {
+            "type": "If",
+            "expression": {
+              "and": [
+                {
+                  "not": {
+                    "equals": [
+                      "@items('For_each')?['properties']?['expirationDate']",
+                      "@null"
+                    ]
+                  }
+                },
+                {
+                  "lessOrEquals": [
+                    "@items('For_each')?['properties']?['expirationDate']",
+                    "@addDays(utcNow(), 30)"
+                  ]
+                }
+              ]
+            },
+            "actions": {
+              "Scope": {
+                "type": "Scope",
+                "actions": {
+                  "HTTP_-_Regenerate_primary_key": {
+                    "type": "Http",
+                    "inputs": {
+                      "method": "PATCH",
+                      "uri": "@{variables('APIM_MANAGEMENT_REST_API_ROOT')}/subscriptions/@{items('For_each')?['name']}",
+                      "queries": {
+                        "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+                      },
+                      "body": {
+                        "properties": {
+                          "primaryKey": "@{body('Parse_JSON_-_Generate_new_subscription_key')?['value']}"
+                        }
+                      },
+                      "authentication": {
+                        "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                        "type": "ManagedServiceIdentity"
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Store_new_subscription_key_in_KeyVault": [
+                        "Succeeded"
+                      ]
+                    }
+                  },
+                  "HTTP_-_Get_subscription_owner": {
+                    "type": "Http",
+                    "inputs": {
+                      "method": "GET",
+                      "uri": "https://management.azure.com@{items('For_each')?['properties']?['ownerId']}",
+                      "queries": {
+                        "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+                      },
+                      "authentication": {
+                        "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                        "type": "ManagedServiceIdentity"
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Regenerate_primary_key": ["Succeeded"]
+                    }
+                  },
+                  "HTTP_-_Get_product": {
+                    "type": "Http",
+                    "inputs": {
+                      "method": "GET",
+                      "uri": "https://management.azure.com/@{items('For_each')?['properties']?['scope']}",
+                      "queries": {
+                        "api-version": "@parameters('MANAGEMENT_REST_API_VERSION')"
+                      },
+                      "authentication": {
+                        "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                        "type": "ManagedServiceIdentity"
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Regenerate_primary_key": ["Succeeded"]
+                    }
+                  },
+                  "Parse_JSON_-_Get_subscription_owner": {
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@body('HTTP_-_Get_subscription_owner')",
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": ["string", "null"]
+                          },
+                          "type": {
+                            "type": ["string", "null"]
+                          },
+                          "name": {
+                            "type": ["string", "null"]
+                          },
+                          "properties": {
+                            "type": "object",
+                            "properties": {
+                              "firstName": {
+                                "type": ["string", "null"]
+                              },
+                              "lastName": {
+                                "type": ["string", "null"]
+                              },
+                              "email": {
+                                "type": ["string", "null"]
+                              },
+                              "state": {
+                                "type": ["string", "null"]
+                              },
+                              "registrationDate": {
+                                "type": ["string", "null"]
+                              },
+                              "note": {},
+                              "identities": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "provider": {
+                                      "type": ["string", "null"]
+                                    },
+                                    "id": {
+                                      "type": ["string", "null"]
+                                    }
+                                  },
+                                  "required": ["provider", "id"]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Get_subscription_owner": ["Succeeded"]
+                    }
+                  },
+                  "Parse_JSON_-_Get_product": {
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@body('HTTP_-_Get_product')",
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": ["string", "null"]
+                          },
+                          "type": {
+                            "type": ["string", "null"]
+                          },
+                          "name": {
+                            "type": ["string", "null"]
+                          },
+                          "properties": {
+                            "type": "object",
+                            "properties": {
+                              "displayName": {
+                                "type": ["string", "null"]
+                              },
+                              "description": {
+                                "type": ["string", "null"]
+                              },
+                              "terms": {
+                                "type": ["string", "null"]
+                              },
+                              "subscriptionRequired": {
+                                "type": "boolean"
+                              },
+                              "approvalRequired": {
+                                "type": "boolean"
+                              },
+                              "subscriptionsLimit": {
+                                "type": "integer"
+                              },
+                              "state": {
+                                "type": ["string", "null"]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Get_product": ["Succeeded"]
+                    }
+                  },
+                  "HTTP_-_Generate_new_subscription_key": {
+                    "type": "Http",
+                    "inputs": {
+                      "method": "POST",
+                      "uri": "@parameters('GENERATE_SUBSCRIPTION_KEY_ENDPOINT')",
+                      "authentication": {
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://management.azure.com",
+                        "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}"
+                      }
+                    },
+                    "runAfter": {}
+                  },
+                  "Parse_JSON_-_Generate_new_subscription_key": {
+                    "type": "ParseJson",
+                    "inputs": {
+                      "content": "@body('HTTP_-_Generate_new_subscription_key')",
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "runAfter": {
+                      "HTTP_-_Generate_new_subscription_key": ["Succeeded"]
+                    }
+                  },
+                  "HTTP_-_Store_new_subscription_key_in_KeyVault": {
+                    "type": "Http",
+                    "inputs": {
+                      "method": "PUT",
+                      "uri": "https://@{parameters('KEY_VAULT_NAME')}.vault.azure.net/secrets/@{items('For_each')?['name']}",
+                      "queries": {
+                        "api-version": "7.3"
+                      },
+                      "body": {
+                        "value": "@{body('Parse_JSON_-_Generate_new_subscription_key')?['value']}"
+                      },
+                      "authentication": {
+                        "identity": "/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/@{parameters('USER_ASSIGNED_IDENTITY_NAME')}",
+                        "type": "ManagedServiceIdentity",
+                        "audience": "https://vault.azure.net"
+                      }
+                    },
+                    "runAfter": {
+                      "Parse_JSON_-_Generate_new_subscription_key": [
+                        "Succeeded"
+                      ]
+                    }
+                  }
+                },
+                "runAfter": {}
+              },
+              "Send_an_email_(V2)": {
+                "type": "ApiConnection",
+                "inputs": {
+                  "host": {
+                    "connection": {
+                      "referenceName": "office365"
+                    }
+                  },
+                  "method": "post",
+                  "body": {
+                    "To": "@body('Parse_JSON_-_Get_subscription_owner')?['properties']?['email']",
+                    "Subject": "API Subscription Primary Key has been reset - @{body('Parse_JSON_-_Get_product')?['properties']?['displayName']}.@{items('For_each')?['properties']?['displayName']}",
+                    "Body": "<p>The API Primary Subscription Key has been reset. Please login to the API Management portal to get the new key.</p>"
+                  },
+                  "path": "/v2/Mail"
+                },
+                "runAfter": {
+                  "Scope": ["Succeeded"]
+                }
+              }
+            },
+            "runAfter": {}
+          }
+        },
+        "runAfter": {
+          "Parse_JSON_-_Get_all_subscriptions": ["Succeeded"]
+        }
+      },
+      "Initialize_variable_-_APIM_MANAGEMENT_REST_API_ROOT": {
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "APIM_MANAGEMENT_REST_API_ROOT",
+              "type": "string",
+              "value": "https://management.azure.com/subscriptions/@{parameters('SUBSCRIPTION_ID')}/resourceGroups/@{parameters('RESOURCE_GROUP_NAME')}/providers/Microsoft.ApiManagement/service/@{parameters('API_MANAGEMENT_SERVICE_NAME')}"
+            }
+          ]
+        },
+        "runAfter": {}
+      }
+    },
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {}
+      }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {}
+  },
+  "kind": "Stateless"
+}
