@@ -40,6 +40,7 @@ public class VehicleController : ControllerBase
 
     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
     _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _configuration.GetSection("EchoApiSubscriptionKey").Value);
+    _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Trace", "true");
     _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
     var vehicle = new Vehicle

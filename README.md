@@ -2,11 +2,17 @@
 
 This repo shows an example of how to use [Logic Apps](https://docs.microsoft.com/en-us/azure/logic-apps/single-tenant-overview-compare) to regenerate the primary key in an [Azure API Management](https://docs.microsoft.com/en-us/azure/api-management/api-management-key-concepts) instance. APIM doesn't provide a native way to rotate keys on a regular basis. Rotating API subscription keys is a good security practice since they are just a long password and should not be considered a secure method of authorizing API calls.
 
+![rotateSubscriptionKeyArchitecture](.img/rotateSubscriptionKeyArchitecture.png)
+
 This repo also has an example of how to use Logic Apps in combination with an [Azure Function](https://docs.microsoft.com/en-us/azure/azure-functions/functions-overview) and an [Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview) to generate custom API subscription keys, store them in Key Vault and then set the key in APIM.
+
+![setSubscriptionKeyArchitecture](.img/setSubscriptionKeyArchitecture.png)
 
 This repo also shows you how to use [stateful Logic Apps](https://docs.microsoft.com/en-us/azure/logic-apps/single-tenant-overview-compare#stateful-stateless) to notify subscription owners that their API subscription keys are about to expire and ask them to approve or deny being the owner.
 
 This repo also shows you how to build a simple web app that has a user interactively sign-in and then call an API protected via the OAuth2 [validate-jwt]() token policy. There is also an example of a daemon (background process with no user interactively signed in) accessing this same API. The APIM policy will also log the `Application ID` of the calling AAD application and log the request to [Azure Event Hub](https://docs.microsoft.com/en-us/azure/event-hubs/event-hubs-about) for further processing.
+
+![authorizationEventHubArchitecture](.img/authorizationEventHubArchitecture.png)
 
 In both cases, the APIM & backing API don't know or care about how the calling application authenticated & got an access token (either via [Authorization Code Flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow) or [Client Credential Flow](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-flow)). The same `validate-jwt` policy can be used for both.
 
@@ -193,9 +199,15 @@ You can right-click on the `logic-app/notify-subscription-owner/workflow.json` f
 
     This will open the `Azure Event Hub Explorer` Output window.
 
+    As you run each app, you will see the output from the Event Hub logger policy in APIM, capturing the `appid` field.
+
+    ![appIdEventHubLog](.img/appIdEventHubLog.png)
+
 ### Run the user app
 
 1.  Update the `/web/client/user/appsettings.json` file with your local values.
+
+    - You can get a `EchoAPISubscriptionKey` from the [Azure portal](https://portal.azure.com). Open the `API Management` instance and click on the `subscriptions` blade. Select a `Product` and click on the ellipsis, then click on `Show/hide keys`.
 
 1.  Run the .NET code
 
@@ -213,11 +225,13 @@ You can right-click on the `logic-app/notify-subscription-owner/workflow.json` f
 
 1.  Notice the values that have been sent to the Event Hub from your policy in APIM.
 
-    ![appIdClientApp](.img/appIdClientApp.png)
+    ![appIdUserApp](.img/appIdUserApp.png)
 
 ### Run the api app
 
 1.  Update the `/web/client/api/appsettings.json` file with your local values.
+
+    - You can get a `EchoAPISubscriptionKey` from the [Azure portal](https://portal.azure.com). Open the `API Management` instance and click on the `subscriptions` blade. Select a `Product` and click on the ellipsis, then click on `Show/hide keys`.
 
 1.  Run the .NET code
 
@@ -231,7 +245,7 @@ You can right-click on the `logic-app/notify-subscription-owner/workflow.json` f
 
 1.  Sign-in if prompted
 
-1.  Click on the `Call API` button
+1.  Change the URL to the API endpoint (https://localhost:7108/vehicle)
 
 1.  Notice the values that have been sent to the Event Hub from your policy in APIM.
 
