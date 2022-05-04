@@ -22,6 +22,7 @@ In both cases, the APIM & backing API don't know or care about how the calling a
 - [.NET 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 - [Azure Function CLI](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash)
 - [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2)
+- [Visual Studio Code](https://code.visualstudio.com/download)
 - [Logic Apps Visual Studio Code Extension](https://docs.microsoft.com/en-us/azure/logic-apps/quickstart-create-logic-apps-visual-studio-code#prerequisites)
 - [Event Hub Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=Summer.azure-event-hub-explorer)
 
@@ -181,6 +182,16 @@ The Logic App will go through the following steps to notify the API subscription
 You can right-click on the `logic-app/notify-subscription-owner/workflow.json` file and select `Open in Designer` to see the GUI tool for building Logic Apps.
 
 ## Run the sample apps
+
+### Set up Event Hub logging in VS Code to see `appid` captured from access tokens
+
+1.  Open VS Code.
+
+1.  Open the `Command Palette` (`Ctrl+Shift+P`) and type in `EventHub: Select EventHub`. Select your Event Hub.
+
+1.  Open the `Command Palette` (`Ctrl+Shift+P`) and type in `EventHub: Start Monitoring Event Hub Message`.
+
+    This will open the `Azure Event Hub Explorer` Output window.
 
 ### Run the user app
 
